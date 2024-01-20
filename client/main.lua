@@ -101,12 +101,18 @@ function attachedWeapons()
 		  local wep_hash = Config.compatable_weapon_hashes[item.name].hash
 		  
 			if not sling_pos[wep_hash] then
-				sling_pos[wep_hash] = "Back"
+				if Config.compatable_weapon_hashes[item.name].gun then
+					sling_pos[wep_hash] = "Back"
+				else
+					sling_pos[wep_hash] = "Back_Alt"
+				end
 			end
 		  
 		    if not attached_weapons[wep_model] and GetSelectedPedWeapon(me) ~= wep_hash then
 				local sling = sling_pos[wep_hash]
+
 				AttachWeapon(wep_model, wep_hash, Config.Positions[sling].bone, Config.Positions[sling].x, Config.Positions[sling].y, Config.Positions[sling].z, Config.Positions[sling].x_rotation, Config.Positions[sling].y_rotation, Config.Positions[sling].z_rotation)
+
 			end
 		end
 	  end
@@ -135,7 +141,7 @@ end
 
 -- Attach new weapons to model
 function AttachWeapon(attachModel,modelHash,boneNumber,x,y,z,xR,yR,zR)
-	
+
 	local bone = GetPedBoneIndex(PlayerPedId(), boneNumber)
 	RequestModel(attachModel)
 	while not HasModelLoaded(attachModel) do
@@ -167,14 +173,17 @@ function refreshEntityAttachment()
 		
 			AttachEntityToEntity(attached_object.handle, PlayerPedId(), boneIndex, Config.Positions[sling].x, Config.Positions[sling].y, Config.Positions[sling].z, Config.Positions[sling].x_rotation, Config.Positions[sling].y_rotation, Config.Positions[sling].z_rotation, 1, 1, 1, 0, 0, 1)	
 		
+			Wait(100)
+
 			-- If reattachment fails, delete object and reattach
-			if IsEntityAttached(attached_object.handle) then
+			-- if IsEntityAttached(attached_object.handle) then
 			
-				print("Recreating Object: " .. weapHash)
+			-- 	print("Recreating Object: " .. weapHash)
 				
-				DeleteObject(attached_object.handle)
-				AttachEntityToEntity(attached_object.handle, PlayerPedId(), boneIndex, Config.Positions[sling].x, Config.Positions[sling].y, Config.Positions[sling].z, Config.Positions[sling].x_rotation, Config.Positions[sling].y_rotation, Config.Positions[sling].z_rotation, 1, 1, 1, 0, 0, 1)	
-			end
+			-- 	DeleteObject(attached_object.handle)
+			-- 	attached_weapons[key].handle = CreateObject(GetHashKey(key), 1.0, 1.0, 1.0, true, true, false)
+			-- 	AttachEntityToEntity(attached_object.handle, PlayerPedId(), boneIndex, Config.Positions[sling].x, Config.Positions[sling].y, Config.Positions[sling].z, Config.Positions[sling].x_rotation, Config.Positions[sling].y_rotation, Config.Positions[sling].z_rotation, 1, 1, 1, 0, 0, 1)
+			-- end
 
 		end
 		
@@ -188,16 +197,18 @@ AddEventHandler('reload-skin:client:changeSling', function()
 	local me = PlayerPedId()
 	local weapHash = GetSelectedPedWeapon(me)
 	local weapSling = sling_pos[weapHash]
-	
-	if weapHash == GetHashKey("WEAPON_UNARMED") then
-		QBCore.Functions.Notify("You must be holding a weapon to change sling position !", "error")
-	end
-	
 
     if weapSling == "Back" then 
 	  sling_pos[weapHash] = "Front"
-    else
+
+	elseif weapSling == "Front" then
       sling_pos[weapHash] = "Back"
+
+	elseif weapSling == "Back_Alt" then
+		sling_pos[weapHash] = "Front_Alt"
+
+	elseif weapSling == "Front_Alt" then
+		sling_pos[weapHash] = "Back_Alt"
     end
 end)
 
