@@ -24,7 +24,15 @@ Citizen.CreateThread(function()
 		else
 			refreshEntityAttachment()
 		end
-		
+
+		-- Delete weapons when entering a vehicle to
+		-- avoid car-nado
+		if IsPedInAnyVehicle(PlayerPedId(), true) then
+			for key, attached_object in pairs(attached_weapons) do
+				DeleteObject(attached_object.handle)
+				attached_weapons[key] = nil
+			end
+		end
 
 	end
     Wait(waitTime)
@@ -40,6 +48,12 @@ local function reloadSkin(health)
     local gender = PlayerData.charinfo.gender
     local maxhealth = GetEntityMaxHealth(PlayerPedId())
 	local armor = GetPedArmour(PlayerPedId())
+
+	for key, attached_object in pairs(attached_weapons) do
+
+		FreezeEntityPosition(attached_object.handle, true)
+
+	end
 	
 	waitTime = 1
 	refreshing = true
@@ -72,14 +86,14 @@ end
 local function startReloadSkin(health)
 
 	QBCore.Functions.Progressbar("pgb", "Freshening Up", 5000, false, true, {
-		disableMovement = true,
+		disableMovement = false,
 		disableCarMovement = true,
 		disableMouse = false,
 		disableCombat = true,
 	}, {
 		animDict = "clothingshirt",
 		anim = "try_shirt_positive_d",
-		flags = 16,
+		flags = 48,
 	}, {}, {}, function() -- Done
 		ClearPedTasks(PlayerId())
 		reloadSkin(health)
@@ -168,8 +182,6 @@ function refreshEntityAttachment()
 			local sling = sling_pos[weapHash]
 			local boneNum = Config.Positions[sling].bone
 			local boneIndex = GetPedBoneIndex(PlayerPedId(), boneNum)
-			
-			print("Reattaching: " .. weapHash)
 		
 			AttachEntityToEntity(attached_object.handle, PlayerPedId(), boneIndex, Config.Positions[sling].x, Config.Positions[sling].y, Config.Positions[sling].z, Config.Positions[sling].x_rotation, Config.Positions[sling].y_rotation, Config.Positions[sling].z_rotation, 1, 1, 1, 0, 0, 1)	
 		
