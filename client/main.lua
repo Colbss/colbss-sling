@@ -6,6 +6,7 @@ local sling_pos = {}
 local hotbar = {}
 local playerLoaded = true
 local refreshing = false
+local inVehicle = false
 
 local waitTime = 500
 
@@ -13,7 +14,7 @@ local waitTime = 500
 
 Citizen.CreateThread(function()
   while true do
-    if playerLoaded then
+    if playerLoaded and not inVehicle then
         
 		-- Only need to attach new weapons when player is
 		-- not refreshing their skin
@@ -25,19 +26,45 @@ Citizen.CreateThread(function()
 			refreshEntityAttachment()
 		end
 
-		-- Delete weapons when entering a vehicle to
-		-- avoid car-nado
-		if IsPedInAnyVehicle(PlayerPedId(), true) then
-			for key, attached_object in pairs(attached_weapons) do
-				DeleteObject(attached_object.handle)
-				attached_weapons[key] = nil
-			end
-		end
-
 	end
     Wait(waitTime)
   end
 end)
+
+Citizen.CreateThread(function()
+	while true do
+	  	if playerLoaded then
+  
+		  	-- Delete weapons when entering a vehicle to
+		  	-- avoid car-nado
+		  	if IsPedInAnyVehicle(PlayerPedId(), true) then
+				inVehicle = true
+				local pedCoords = GetEntityCoords(PlayerPedId())
+			  	for key, attached_object in pairs(attached_weapons) do
+
+					-- while IsEntityAttached(attached_object.handle) do
+
+					-- 	print("Delete weapon option 1: " .. tostring(attached_object.handle))
+					-- 	DeleteObject(attached_object.handle)
+					-- 	attached_weapons[key] = nil
+
+					-- end
+
+					-- Remove extra props that may be stuck
+					local objectId = GetClosestObjectOfType(pedCoords, 5.0, GetHashKey(key), false)
+					DeleteObject(objectId)
+
+			  	end
+		  	else
+				inVehicle = false
+			end
+
+	  	end
+		-- Keep wait time on this as low as possible
+		-- to reduuce chance of car-nado
+	 	Wait(10)
+	end
+  end)
 
 -- ######### FUNCTIONS #########
 
@@ -48,12 +75,6 @@ local function reloadSkin(health)
     local gender = PlayerData.charinfo.gender
     local maxhealth = GetEntityMaxHealth(PlayerPedId())
 	local armor = GetPedArmour(PlayerPedId())
-
-	for key, attached_object in pairs(attached_weapons) do
-
-		FreezeEntityPosition(attached_object.handle, true)
-
-	end
 	
 	waitTime = 1
 	refreshing = true
@@ -83,26 +104,37 @@ local function reloadSkin(health)
 	
 end
 
-local function startReloadSkin(health)
+local function startReloadSkin(health, delayed)
 
-	QBCore.Functions.Progressbar("pgb", "Freshening Up", 5000, false, true, {
-		disableMovement = false,
-		disableCarMovement = true,
-		disableMouse = false,
-		disableCombat = true,
-	}, {
-		animDict = "clothingshirt",
-		anim = "try_shirt_positive_d",
-		flags = 48,
-	}, {}, {}, function() -- Done
-		ClearPedTasks(PlayerId())
+	if delayed then
+
+		QBCore.Functions.Progressbar("pgb", "Freshening Up", 5000, false, true, {
+			disableMovement = false,
+			disableCarMovement = true,
+			disableMouse = false,
+			disableCombat = true,
+		}, {
+			animDict = "clothingshirt",
+			anim = "try_shirt_positive_d",
+			flags = 48,
+		}, {}, {}, function() -- Done
+			ClearPedTasks(PlayerId())
+			reloadSkin(health)
+		end, function() -- Cancel
+			-- Do nothing
+		end)
+
+	else
+
 		reloadSkin(health)
-	end, function() -- Cancel
-		-- Do nothing
-	end)
+
+	end
+
+	
 	
 end
 
+-- Attach weapons in player hotbar to player
 function attachedWeapons()
 
 	local me = PlayerPedId()
@@ -142,6 +174,7 @@ function attachedWeapons()
 	
 end
 
+-- Check if weapon is in a hotbar slot
 function inHotbar(hash)
   for slot, item in pairs(hotbar) do
     if item ~= nil and item.type == "weapon" and Config.compatable_weapon_hashes[item.name] ~= nil then
@@ -185,17 +218,18 @@ function refreshEntityAttachment()
 		
 			AttachEntityToEntity(attached_object.handle, PlayerPedId(), boneIndex, Config.Positions[sling].x, Config.Positions[sling].y, Config.Positions[sling].z, Config.Positions[sling].x_rotation, Config.Positions[sling].y_rotation, Config.Positions[sling].z_rotation, 1, 1, 1, 0, 0, 1)	
 		
-			Wait(100)
+			Wait(1000)
 
-			-- If reattachment fails, delete object and reattach
-			-- if IsEntityAttached(attached_object.handle) then
+			--If reattachment fails, delete object and reattach
+			if not IsEntityAttached(attached_object.handle) then
 			
-			-- 	print("Recreating Object: " .. weapHash)
-				
-			-- 	DeleteObject(attached_object.handle)
-			-- 	attached_weapons[key].handle = CreateObject(GetHashKey(key), 1.0, 1.0, 1.0, true, true, false)
-			-- 	AttachEntityToEntity(attached_object.handle, PlayerPedId(), boneIndex, Config.Positions[sling].x, Config.Positions[sling].y, Config.Positions[sling].z, Config.Positions[sling].x_rotation, Config.Positions[sling].y_rotation, Config.Positions[sling].z_rotation, 1, 1, 1, 0, 0, 1)
-			-- end
+				print("Recreating Object: " .. key)
+				DeleteObject(attached_object.handle)
+
+				attached_weapons[key].handle = CreateObject(GetHashKey(key), 1.0, 1.0, 1.0, true, true, false)
+				AttachEntityToEntity(attached_object.handle, PlayerPedId(), boneIndex, Config.Positions[sling].x, Config.Positions[sling].y, Config.Positions[sling].z, Config.Positions[sling].x_rotation, Config.Positions[sling].y_rotation, Config.Positions[sling].z_rotation, 1, 1, 1, 0, 0, 1)
+			
+			end
 
 		end
 		
@@ -234,6 +268,61 @@ RegisterCommand("reloadskin", function(source)
 
 	local playerPed = PlayerPedId()
 	local health = GetEntityHealth(playerPed)
-	startReloadSkin(health)
+	startReloadSkin(health, true)
 	
 end)
+
+RegisterCommand("debug", function(source)
+
+	-- print("True: " .. tostring(true) .. " , False: " .. tostring(false))
+
+	-- for key, attached_object in pairs(attached_weapons) do
+	
+	-- 	local atc = IsEntityAttached(attached_object.handle)
+
+	-- 	print(key .. " , attached: " .. tostring(atc))
+		
+	-- end
+
+	----------------------------------------------------
+
+	local pedCoords = GetEntityCoords(PlayerPedId())
+
+	for key, attached_object in pairs(attached_weapons) do
+	
+		local objectId = GetClosestObjectOfType(pedCoords, 5.0, GetHashKey(key), false)
+
+		print(key .. " exists? " .. tostring(DoesEntityExist(objectId)))
+		
+	end
+
+	
+	-- local objectId = GetClosestObjectOfType(pedCoords, 5.0, GetHashKey("w_mg_minigun"), false) -- w_mg_minigun
+
+	-- print("Mnigun exists? " .. tostring(DoesEntityExist(objectId)))
+
+
+	
+end)
+
+RegisterCommand("debugdel", function(source)
+
+	local pedCoords = GetEntityCoords(PlayerPedId())
+
+	for key, attached_object in pairs(attached_weapons) do
+
+		local objectId = GetClosestObjectOfType(pedCoords, 5.0, GetHashKey(key), false)
+
+		DeleteObject(objectId)
+
+	end
+
+end)
+
+-- AddEventHandler('apartments:client:LeaveApartment', function()
+-- 	Wait(2000)
+--     print("apartments:client:LeaveApartment -- LEFT APARTMENT !")
+-- 	local playerPed = PlayerPedId()
+-- 	local health = GetEntityHealth(playerPed)
+-- 	startReloadSkin(health, false)
+-- end)
