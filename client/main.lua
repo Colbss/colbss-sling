@@ -41,17 +41,8 @@ Citizen.CreateThread(function()
 				inVehicle = true
 				local pedCoords = GetEntityCoords(PlayerPedId())
 			  	for key, attached_object in pairs(attached_weapons) do
-
-					-- while IsEntityAttached(attached_object.handle) do
-
-					-- 	print("Delete weapon option 1: " .. tostring(attached_object.handle))
-					-- 	DeleteObject(attached_object.handle)
-					-- 	attached_weapons[key] = nil
-
-					-- end
-
-					-- Remove extra props that may be stuck
-					local objectId = GetClosestObjectOfType(pedCoords, 5.0, GetHashKey(key), false)
+					-- Remove props from back
+					local objectId = GetClosestObjectOfType(pedCoords, 1.0, GetHashKey(key), false)
 					DeleteObject(objectId)
 
 			  	end
@@ -288,18 +279,18 @@ RegisterCommand("debug", function(source)
 
 	local pedCoords = GetEntityCoords(PlayerPedId())
 
-	for key, attached_object in pairs(attached_weapons) do
+	-- for key, attached_object in pairs(attached_weapons) do
 	
-		local objectId = GetClosestObjectOfType(pedCoords, 5.0, GetHashKey(key), false)
+	-- 	local objectId = GetClosestObjectOfType(pedCoords, 5.0, GetHashKey(key), false)
 
-		print(key .. " exists? " .. tostring(DoesEntityExist(objectId)))
+	-- 	print(key .. " exists? " .. tostring(DoesEntityExist(objectId)))
 		
-	end
+	-- end
 
 	
-	-- local objectId = GetClosestObjectOfType(pedCoords, 5.0, GetHashKey("w_mg_minigun"), false) -- w_mg_minigun
+	local objectId = GetClosestObjectOfType(pedCoords, 1.0, GetHashKey("w_mg_minigun"), false) -- w_mg_minigun
 
-	-- print("Mnigun exists? " .. tostring(DoesEntityExist(objectId)))
+	print("Mnigun exists? " .. tostring(DoesEntityExist(objectId)))
 
 
 	
@@ -311,7 +302,7 @@ RegisterCommand("debugdel", function(source)
 
 	for key, attached_object in pairs(attached_weapons) do
 
-		local objectId = GetClosestObjectOfType(pedCoords, 5.0, GetHashKey(key), false)
+		local objectId = GetClosestObjectOfType(pedCoords, 1.0, GetHashKey(key), false)
 
 		DeleteObject(objectId)
 
