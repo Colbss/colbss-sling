@@ -106,7 +106,7 @@ Config.Positions = {
         offset_dir = "-1"
     },
 
-    -- Extra positions
+    -- Extra positions to customize
     [10] = { -- ?????
         bone = 24816,
         x = 0.275,
@@ -130,13 +130,6 @@ Config.Positions = {
         offset_dir = "-1"
     }
 }
-
-    -- Offset Directions:
-    -- Back        : y negative
-    -- Front       : y positive
-    -- Back Melee  : y negative
-    -- Front Melee : y positive
-    -- Holster     : z postive
 
     -- Weapon names and hashes
     -- https://gist.github.com/BeyondPvP/f8ab34c8b207afddfa9dd5a1b864c7fe
@@ -172,7 +165,7 @@ Config.compatable_weapon_hashes = {
     -- Submachine Guns :
     ["weapon_microsmg"]            = { model = "w_sb_microsmg",            hash = 324215364 ,                              pos = {3,2}},
     ["weapon_assaultsmg"]          = { model = "w_sb_assaultsmg",          hash = -270015777 ,                             pos = {3,4}},
-    ["weapon_smg"]                 = { model = "w_sb_smg",                 hash = 736523883 ,                              pos = {2,4}},
+    ["weapon_smg"]                 = { model = "w_sb_smg",                 hash = 736523883 ,                              pos = {3,4}},
     --["weapon_smgmk2"]              = { model = "w_sb_smgmk2",              hash = GetHashKey("weapon_smgmk2") ,            pos = {1,2}}, -- Doesnt exist
     ["weapon_gusenberg"]           = { model = "w_sb_gusenberg",           hash = 1627465347 ,                             pos = {3,2}},
     ["weapon_combatpdw"]           = { model = "w_sb_pdw",                 hash = 171789620 ,                              pos = {3,2}},
@@ -208,16 +201,16 @@ Config.compatable_weapon_hashes = {
     ["weapon_pistol_mk2"]          = { model = "w_pi_pistolmk2",           hash = -1075685676 ,                            pos = {7}},
     ["weapon_combatpistol"]        = { model = "w_pi_combatpistol",        hash = 1593441988 ,                             pos = {7}},
     ["weapon_appistol"]            = { model = "w_pi_appistol",            hash = 584646201 ,                              pos = {7}},
-    ["weapon_snspistol"]           = { model = "w_pi_sns_pistol",          hash = -1076751822 ,                            pos = {7}},
+    --["weapon_snspistol"]           = { model = "w_pi_sns_pistol",          hash = -1076751822 ,                            pos = {7}},
     ["weapon_marksmanpistol"]      = { model = "W_PI_SingleShot",          hash = -598887786 ,                             pos = {7}},
     ["weapon_revolver"]            = { model = "w_pi_revolver",            hash = -1045183535 ,                            pos = {7}},
     ["weapon_revolver_mk2"]        = { model = "w_pi_revolvermk2",         hash = -879347409 ,                             pos = {7}},
     ["weapon_doubleaction"]        = { model = "w_pi_wep1_gun",            hash = -1746263880 ,                            pos = {7}},
-    ["weapon_snspistol_mk2"]       = { model = "w_pi_sns_pistolmk2",       hash = -2009644972 ,                            pos = {7}},
+    --["weapon_snspistol_mk2"]       = { model = "w_pi_sns_pistolmk2",       hash = -2009644972 ,                            pos = {7}},
     ["weapon_ceramicpistol"]       = { model = "w_pi_ceramic_pistol",      hash = 727643628 ,                              pos = {7}},
     ["weapon_navyrevolver"]        = { model = "w_pi_wep2_gun",            hash = -1853920116 ,                            pos = {7}},
-    ["weapon_gadgetpistol"]        = { model = "w_pi_singleshoth4",        hash = 1470379660 ,                             pos = {7}}, -- Perico Pistol
-    ["weapon_pistolxm3"]           = { model = "W_PI_Pistol_XM3",          hash = GetHashKey("weapon_pistolxm3") ,         pos = {7}}, -- WM 29 Pistol
+    --["weapon_gadgetpistol"]        = { model = "w_pi_singleshoth4",        hash = 1470379660 ,                             pos = {7}}, -- Perico Pistol
+    --["weapon_pistolxm3"]           = { model = "W_PI_Pistol_XM3",          hash = GetHashKey("weapon_pistolxm3") ,         pos = {7}}, -- WM 29 Pistol
     ["weapon_vintagepistol"]       = { model = "w_pi_vintage_pistol",      hash = 137902532 ,                              pos = {7}},
     ["weapon_minismg"]             = { model = "w_sb_minismg",             hash = -1121678507 ,                            pos = {7}},
     ["weapon_machinepistol"]       = { model = "w_sb_compactsmg",          hash = -619010992 ,                             pos = {7}},

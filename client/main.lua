@@ -7,7 +7,6 @@ local items = {}
 local playerLoaded = true
 local refreshing = false
 local inVehicle = false
--- local toggleReach = false
 
 local waitTime = 500
 
@@ -56,42 +55,6 @@ Citizen.CreateThread(function()
 	 	Wait(10)
 	end
   end)
-
---   CreateThread(function()
--- 	local dict = "reaction@intimidation@cop@unarmed"
--- 	local handOn = false
---     while true do
---         Wait(0)
---         if toggleReach then
--- 			if not handOn then
--- 				print("Start Animation")
--- 				RequestAnimDict(dict)
--- 				while not HasAnimDictLoaded(dict) do Wait(1) end
--- 				TaskPlayAnim(PlayerPedId(), dict, "intro", 2.0, 2.0, -1, 50, 0, false, false, false)
--- 				handOn = true
--- 			else
--- 				print("Stop Animation")
--- 				StopAnimTask(PlayerPedId(), dict, "intro")
--- 				handOn = false
--- 			end
--- 			toggleReach = false
---         end
---     end
--- end)
-
--- RegisterKeyMapping('+reach', 'Reach For Your Gun', 'keyboard', 'z')
-
--- -- RegisterCommand('+reach', function()
--- -- 	toggleReach = not toggleReach
--- -- 	print("Toggle Reach: " .. tostring(toggleReach))
--- -- end)
-
--- RegisterCommand('+reach', function()
---     toggleReach = true
--- end, false)
--- RegisterCommand('-reach', function()
---     toggleReach = false
--- end, false)
 
 -- <<<<<<<<<<<<<<< FUNCTIONS >>>>>>>>>>>>>>> --
 
@@ -157,11 +120,9 @@ local function startReloadSkin(health, delayed)
 
 	end
 
-	
-	
 end
 
--- Attach weapons in player hotbar to player
+-- Attach weapons to player
 function attachedWeapons()
 
 	local me = PlayerPedId()
@@ -201,9 +162,9 @@ function attachedWeapons()
 	  	end
 	  	local pedCoords = GetEntityCoords(PlayerPedId())
 	  	for key, attached_object in pairs(attached_weapons) do
-		  	if GetSelectedPedWeapon(me) == attached_object.hash or not hasWeapon(attached_object.hash) then -- equipped or not in weapon wheel
+		  	if GetSelectedPedWeapon(me) == attached_object.hash or not hasWeapon(attached_object.hash) then
 
-				-- Check if another weapon that uses the same model is in hotbar
+				-- Check if another weapon that uses the same model is in pockets
 				local sameModel = false
 				local modelCount = 0
 				for slot, item in pairs(items) do
@@ -307,7 +268,6 @@ function refreshEntityAttachment()
 			--If reattachment fails, delete object and reattach
 			if not IsEntityAttached(attached_object.handle) then
 			
-				print("Recreating Object: " .. key)
 				DeleteObject(attached_object.handle)
 
 				attached_weapons[key].handle = CreateObject(GetHashKey(key), 1.0, 1.0, 1.0, true, true, false)
@@ -384,7 +344,7 @@ AddEventHandler('QBCore:Client:OnPlayerLoaded', function()
   playerLoaded = true;
 end)
 
-AddEventHandler("qb-multicharacter:client:chooseChar", function()
+AddEventHandler("apartments:client:Logout", function()
 
 	-- Delete props if player logs out
 
@@ -409,26 +369,4 @@ RegisterCommand("reloadskin", function(source)
 	local health = GetEntityHealth(playerPed)
 	startReloadSkin(health, true)
 	
-end)
-
---------------------------------------------------------------------------------------
-
-RegisterCommand("debug", function(source)
-
-	print("SMG MK2 Hash: " .. tostring(GetHashKey("weapon_smgmk2")))
-	
-end)
-
-RegisterCommand("debugdel", function(source)
-
-	local pedCoords = GetEntityCoords(PlayerPedId())
-
-	for key, attached_object in pairs(attached_weapons) do
-
-		local objectId = GetClosestObjectOfType(pedCoords, 1.0, GetHashKey(key), false)
-
-		DeleteObject(objectId)
-
-	end
-
 end)
