@@ -165,7 +165,7 @@ end
 function attachedWeapons()
 
 	local me = PlayerPedId()
-	local items = QBCore.Functions.GetPlayerData().items
+	items = QBCore.Functions.GetPlayerData().items
 	if items ~= nil then 
 
 		if Config.HotbarOnly then
@@ -201,16 +201,19 @@ function attachedWeapons()
 	  	end
 	  	local pedCoords = GetEntityCoords(PlayerPedId())
 	  	for key, attached_object in pairs(attached_weapons) do
-		  	if GetSelectedPedWeapon(me) == attached_object.hash or not inHotbar(attached_object.hash) or not hasWeapon(attached_object.hash) then -- equipped or not in weapon wheel
+		  	if GetSelectedPedWeapon(me) == attached_object.hash or not hasWeapon(attached_object.hash) then -- equipped or not in weapon wheel
 
 				-- Check if another weapon that uses the same model is in hotbar
 				local sameModel = false
+				local modelCount = 0
 				for slot, item in pairs(items) do
 					if item ~= nil and item.type == "weapon" then
-						if Config.compatable_weapon_hashes[item.name].model == key and Config.compatable_weapon_hashes[item.name].hash ~= GetSelectedPedWeapon(me) then
-							sameModel = true
-							--print("SAME MODEL : " .. slot)
-							break
+						if Config.compatable_weapon_hashes[item.name].hash == GetSelectedPedWeapon(me) then
+							modelCount = modelCount + 1
+							if modelCount >= 2 then
+								sameModel = true
+								break
+							end
 						end
 					end
 				end
@@ -226,7 +229,6 @@ function attachedWeapons()
 					DeleteObject(objectId)
 
 				end
-
 		  	end
 	  	end
 	end
@@ -259,21 +261,6 @@ end
 -- Check if player has a weapon
 function hasWeapon(hash)
 
-	if Config.HotbarOnly then
-		return true
-	else
-		return HasPedGotWeapon(PlayerPedId(), hash, false)
-	end
-
-end
-
--- Check if weapon is in a hotbar slot
-function inHotbar(hash)
-
-	if not Config.HotbarOnly then
-		return true
-	end
-
 	for slot, item in pairs(items) do
 		if item ~= nil and item.type == "weapon" and Config.compatable_weapon_hashes[item.name] ~= nil then
 			if hash == GetHashKey(item.name) then
@@ -282,6 +269,7 @@ function inHotbar(hash)
 		end
 	end
   	return false
+
 end
 
 -- Attach new weapons to model
