@@ -3,7 +3,7 @@ local QBCore = exports['qb-core']:GetCoreObject()
 
 local attached_weapons = {}
 local sling_vals = {}
-local hotbar = {}
+local items = {}
 local playerLoaded = true
 local refreshing = false
 local inVehicle = false
@@ -11,7 +11,7 @@ local inVehicle = false
 
 local waitTime = 500
 
--- ######### THREAD #########
+-- <<<<<<<<<<<<<<< THREADS >>>>>>>>>>>>>>> --
 
 Citizen.CreateThread(function()
   while true do
@@ -21,7 +21,7 @@ Citizen.CreateThread(function()
 		-- not refreshing their skin
 		if not refreshing then
 			attachedWeapons()
-		-- Keep checking for detattched weapons while
+		-- Keep checking for detached weapons while
 		-- player is refreshing their skin
 		else
 			refreshEntityAttachment()
@@ -36,8 +36,7 @@ Citizen.CreateThread(function()
 	while true do
 	  	if playerLoaded then
   
-		  	-- Delete weapons when entering a vehicle to
-		  	-- avoid car-nado
+		  	-- Delete weapons when entering a vehicle to avoid car-nado
 		  	if IsPedInAnyVehicle(PlayerPedId(), true) then
 				inVehicle = true
 				local pedCoords = GetEntityCoords(PlayerPedId())
@@ -94,7 +93,7 @@ Citizen.CreateThread(function()
 --     toggleReach = false
 -- end, false)
 
--- ######### FUNCTIONS #########
+-- <<<<<<<<<<<<<<< FUNCTIONS >>>>>>>>>>>>>>> --
 
 local function reloadSkin(health)
     local model
@@ -168,42 +167,68 @@ function attachedWeapons()
 	local me = PlayerPedId()
 	local items = QBCore.Functions.GetPlayerData().items
 	if items ~= nil then 
-	  hotbar = { items[1], items[2], items[3], items[4], items[5], items[41] }
-	  for slot, item in pairs(hotbar) do
-		if item ~= nil and item.type == "weapon" and Config.compatable_weapon_hashes[item.name] ~= nil then
-		  local wep_model = Config.compatable_weapon_hashes[item.name].model
-		  local wep_hash = Config.compatable_weapon_hashes[item.name].hash
-		  
-			if not sling_vals[wep_hash] then
-				new_pos = Config.compatable_weapon_hashes[item.name].pos
-				sling_vals[wep_hash] =  {
-				 	pos = new_pos,
-				 	offset_val = 0.0,
-				 	offset_plane = Config.Positions[new_pos].offset_plane,
-				 	offset_dir = Config.Positions[new_pos].offset_dir
-				}
-			end
-		  
-		    if not attached_weapons[wep_model] and GetSelectedPedWeapon(me) ~= wep_hash then
-				local sling = sling_vals[wep_hash].pos
 
-				AttachWeapon(wep_model, wep_hash, Config.Positions[sling].bone, Config.Positions[sling].x, Config.Positions[sling].y, Config.Positions[sling].z, Config.Positions[sling].x_rotation, Config.Positions[sling].y_rotation, Config.Positions[sling].z_rotation)
-
-			end
+		if Config.HotbarOnly then
+			items = { items[1], items[2], items[3], items[4], items[5], items[41] }
 		end
-	  end
-	  local pedCoords = GetEntityCoords(PlayerPedId())
-	  for key, attached_object in pairs(attached_weapons) do
-		  if GetSelectedPedWeapon(me) == attached_object.hash or not inHotbar(attached_object.hash) then -- equipped or not in weapon wheel
 
-			DeleteObject(attached_object.handle)
-			attached_weapons[key] = nil
+	  	for slot, item in pairs(items) do
+			if item ~= nil and item.type == "weapon" and Config.compatable_weapon_hashes[item.name] ~= nil then
+			local wep_model = Config.compatable_weapon_hashes[item.name].model
+			local wep_hash = Config.compatable_weapon_hashes[item.name].hash
+			
+				if not sling_vals[wep_hash] then
+					pos = Config.compatable_weapon_hashes[item.name].pos
+					new_pos_index = pos[1]
 
-			-- Check for remaining props from returning from a bucket / dimension (i.e. leaving an apartment)
-			local objectId = GetClosestObjectOfType(pedCoords, 1.0, GetHashKey(key), false)
-			DeleteObject(objectId)
-		  end
-	  end
+					sling_vals[wep_hash] =  {
+						pos_vals = pos,
+						pos_index = 1,
+						offset_val = 0.0,
+						offset_plane = Config.Positions[new_pos_index].offset_plane,
+						offset_dir = Config.Positions[new_pos_index].offset_dir
+					}
+
+				end
+			
+				if not attached_weapons[wep_model] and GetSelectedPedWeapon(me) ~= wep_hash then
+					local sling = sling_vals[wep_hash].pos_vals[sling_vals[wep_hash].pos_index]
+
+					AttachWeapon(wep_model, wep_hash, Config.Positions[sling].bone, Config.Positions[sling].x, Config.Positions[sling].y, Config.Positions[sling].z, Config.Positions[sling].x_rotation, Config.Positions[sling].y_rotation, Config.Positions[sling].z_rotation)
+
+				end
+			end
+	  	end
+	  	local pedCoords = GetEntityCoords(PlayerPedId())
+	  	for key, attached_object in pairs(attached_weapons) do
+		  	if GetSelectedPedWeapon(me) == attached_object.hash or not inHotbar(attached_object.hash) or not hasWeapon(attached_object.hash) then -- equipped or not in weapon wheel
+
+				-- Check if another weapon that uses the same model is in hotbar
+				local sameModel = false
+				for slot, item in pairs(items) do
+					if item ~= nil and item.type == "weapon" then
+						if Config.compatable_weapon_hashes[item.name].model == key and Config.compatable_weapon_hashes[item.name].hash ~= GetSelectedPedWeapon(me) then
+							sameModel = true
+							--print("SAME MODEL : " .. slot)
+							break
+						end
+					end
+				end
+
+				-- If another weapon uses the same model, dont delete it
+				if not sameModel then
+
+					DeleteObject(attached_object.handle)
+					attached_weapons[key] = nil
+	
+					-- Check for remaining props from returning from a bucket / dimension (i.e. leaving an apartment)
+					local objectId = GetClosestObjectOfType(pedCoords, 1.0, GetHashKey(key), false)
+					DeleteObject(objectId)
+
+				end
+
+		  	end
+	  	end
 	end
 	
 	refreshEntityAttachment()
@@ -212,42 +237,55 @@ end
 
 function attachWithOffset(wep_handle, bone, sling)
 
-	sling_pos = sling.pos
+	sling_pos = sling.pos_vals[sling.pos_index]
 	offset = sling.offset_val * sling.offset_dir
 
 	if sling.offset_plane == "x" then
 
 		AttachEntityToEntity(wep_handle, PlayerPedId(), bone, Config.Positions[sling_pos].x + offset, Config.Positions[sling_pos].y, Config.Positions[sling_pos].z, Config.Positions[sling_pos].x_rotation, Config.Positions[sling_pos].y_rotation, Config.Positions[sling_pos].z_rotation, 1, 1, 0, 0, 0, 1)
-		print("Attach to bone: " .. bone .. " , X " .. tostring(Config.Positions[sling_pos].x + offset) .. " , Y " .. tostring(Config.Positions[sling_pos].y) .. " , Z " .. tostring(Config.Positions[sling_pos].z))
 
 	elseif sling.offset_plane == "y" then
 
 		AttachEntityToEntity(wep_handle, PlayerPedId(), bone, Config.Positions[sling_pos].x, Config.Positions[sling_pos].y + offset, Config.Positions[sling_pos].z, Config.Positions[sling_pos].x_rotation, Config.Positions[sling_pos].y_rotation, Config.Positions[sling_pos].z_rotation, 1, 1, 0, 0, 0, 1)
-		print("Attach to bone: " .. bone .. " , X " .. tostring(Config.Positions[sling_pos].x) .. " , Y " .. tostring(Config.Positions[sling_pos].y + offset) .. " , Z " .. tostring(Config.Positions[sling_pos].z))
 
 	else
 
 		AttachEntityToEntity(wep_handle, PlayerPedId(), bone, Config.Positions[sling_pos].x + offset, Config.Positions[sling_pos].y, Config.Positions[sling_pos].z + offset, Config.Positions[sling_pos].x_rotation, Config.Positions[sling_pos].y_rotation, Config.Positions[sling_pos].z_rotation, 1, 1, 0, 0, 0, 1)
-		print("Attach to bone: " .. bone .. " , X " .. tostring(Config.Positions[sling_pos].x) .. " , Y " .. tostring(Config.Positions[sling_pos].y) .. " , Z " .. tostring(Config.Positions[sling_pos].z + offset))
 
+	end
+
+end
+
+-- Check if player has a weapon
+function hasWeapon(hash)
+
+	if Config.HotbarOnly then
+		return true
+	else
+		return HasPedGotWeapon(PlayerPedId(), hash, false)
 	end
 
 end
 
 -- Check if weapon is in a hotbar slot
 function inHotbar(hash)
-  for slot, item in pairs(hotbar) do
-    if item ~= nil and item.type == "weapon" and Config.compatable_weapon_hashes[item.name] ~= nil then
-      if hash == GetHashKey(item.name) then
-        return true
-      end
-    end
-  end
-  return false
+
+	if not Config.HotbarOnly then
+		return true
+	end
+
+	for slot, item in pairs(items) do
+		if item ~= nil and item.type == "weapon" and Config.compatable_weapon_hashes[item.name] ~= nil then
+			if hash == GetHashKey(item.name) then
+				return true
+			end
+		end
+	end
+  	return false
 end
 
 -- Attach new weapons to model
-function AttachWeapon(attachModel,modelHash,boneNumber,x,y,z,xR,yR,zR)
+function AttachWeapon(attachModel,weaponHash,boneNumber,x,y,z,xR,yR,zR)
 
 	local bone = GetPedBoneIndex(PlayerPedId(), boneNumber)
 	RequestModel(attachModel)
@@ -256,12 +294,11 @@ function AttachWeapon(attachModel,modelHash,boneNumber,x,y,z,xR,yR,zR)
 	end
 
 	attached_weapons[attachModel] = {
-		hash = modelHash,
+		hash = weaponHash,
 		handle = CreateObject(GetHashKey(attachModel), 1.0, 1.0, 1.0, true, true, false)
 	}
              
-	attachWithOffset(attached_weapons[attachModel].handle, bone, sling_vals[modelHash])
-	--AttachEntityToEntity(attached_weapons[attachModel].handle, PlayerPedId(), bone, x, y, z, xR, yR, zR, 1, 1, 0, 0, 0, 1)
+	attachWithOffset(attached_weapons[attachModel].handle, bone, sling_vals[weaponHash])
 	
 end
 
@@ -273,14 +310,11 @@ function refreshEntityAttachment()
 		if not IsEntityAttached(attached_object.handle) then
 		
 			local weapHash = attached_object.hash
-			local sling = sling_vals[weapHash].pos
+			local sling = sling_vals[weapHash].pos_vals[sling_vals[weapHash].pos_index]
 			local boneNum = Config.Positions[sling].bone
 			local boneIndex = GetPedBoneIndex(PlayerPedId(), boneNum)
 		
 			attachWithOffset(attached_object.handle, boneIndex, sling_vals[weapHash])
-			--AttachEntityToEntity(attached_object.handle, PlayerPedId(), boneIndex, Config.Positions[sling].x, Config.Positions[sling].y, Config.Positions[sling].z, Config.Positions[sling].x_rotation, Config.Positions[sling].y_rotation, Config.Positions[sling].z_rotation, 1, 1, 1, 0, 0, 1)	
-		
-			Wait(1000)
 
 			--If reattachment fails, delete object and reattach
 			if not IsEntityAttached(attached_object.handle) then
@@ -290,7 +324,6 @@ function refreshEntityAttachment()
 
 				attached_weapons[key].handle = CreateObject(GetHashKey(key), 1.0, 1.0, 1.0, true, true, false)
 				attachWithOffset(attached_object.handle, boneIndex, sling_vals[weapHash])
-				--AttachEntityToEntity(attached_object.handle, PlayerPedId(), boneIndex, Config.Positions[sling].x, Config.Positions[sling].y, Config.Positions[sling].z, Config.Positions[sling].x_rotation, Config.Positions[sling].y_rotation, Config.Positions[sling].z_rotation, 1, 1, 1, 0, 0, 1)
 			
 			end
 
@@ -300,40 +333,51 @@ function refreshEntityAttachment()
 
 end
 
-RegisterNetEvent('reload-skin:client:changeSling')
-AddEventHandler('reload-skin:client:changeSling', function()
+-- <<<<<<<<<<<<<<< EVENTS >>>>>>>>>>>>>>> --
+
+RegisterNetEvent('colbss-sling:client:changeSling')
+AddEventHandler('colbss-sling:client:changeSling', function()
 
 	local me = PlayerPedId()
 	local weapHash = GetSelectedPedWeapon(me)
+
+	if weapHash == GetHashKey("weapon_unarmed") then
+		QBCore.Functions.Notify("You are not holding a weapon!", "error")
+		return
+	end
+
 	local weapSling = sling_vals[weapHash].pos
 
-    if weapSling == "Back" then 
-	  sling_vals[weapHash].pos = "Front"
+	local curr_index = sling_vals[weapHash].pos_index
+	local pos_list = sling_vals[weapHash].pos_vals
 
-	elseif weapSling == "Front" then
-      sling_vals[weapHash].pos = "Back"
+	if #pos_list == 1 then
 
-	elseif weapSling == "Back_Low" then 
-		sling_vals[weapHash].pos = "Front_Low"
-  
-	elseif weapSling == "Front_Low" then
-		sling_vals[weapHash].pos = "Back_Low"
-
-	elseif weapSling == "Back_Melee" then
-		sling_vals[weapHash].pos = "Front_Melee"
-
-	elseif weapSling == "Front_Melee" then
-		sling_vals[weapHash].pos = "Back_Melee"
-
-	elseif weapSling == "Holster" then
 		QBCore.Functions.Notify("There is no sling variant for this weapon!", "error")
 
-    end
+	elseif curr_index + 1 <= #pos_list then
+
+		new_index = curr_index + 1
+		sling = pos_list[new_index]
+
+		sling_vals[weapHash].pos_index = new_index
+		sling_vals[weapHash].offset_plane = Config.Positions[sling].offset_plane
+		sling_vals[weapHash].offset_dir = Config.Positions[sling].offset_dir
+
+	else
+
+		sling = pos_list[1]
+
+		sling_vals[weapHash].pos_index = 1
+		sling_vals[weapHash].offset_plane = Config.Positions[sling].offset_plane
+		sling_vals[weapHash].offset_dir = Config.Positions[sling].offset_dir
+
+	end
 
 end)
 
-RegisterNetEvent('reload-skin:client:slingOffset')
-AddEventHandler('reload-skin:client:slingOffset', function(offset)
+RegisterNetEvent('colbss-sling:client:slingOffset')
+AddEventHandler('colbss-sling:client:slingOffset', function(offset)
 
 	local me = PlayerPedId()
 	local weapHash = GetSelectedPedWeapon(me)
@@ -345,8 +389,6 @@ AddEventHandler('reload-skin:client:slingOffset', function(offset)
 
 	sling_vals[weapHash].offset_val = 0.025 * offset
 
-	print("Offset : " .. tostring(sling_vals[weapHash].offset_val))
-
 end)
 
 RegisterNetEvent('QBCore:Client:OnPlayerLoaded')
@@ -354,54 +396,38 @@ AddEventHandler('QBCore:Client:OnPlayerLoaded', function()
   playerLoaded = true;
 end)
 
-RegisterCommand("qb-multicharacter:client:chooseChar", function(source)
+AddEventHandler("qb-multicharacter:client:chooseChar", function()
 
 	-- Delete props if player logs out
 
 	for key, attached_object in pairs(attached_weapons) do
-		if GetSelectedPedWeapon(me) == attached_object.hash or not inHotbar(attached_object.hash) then -- equipped or not in weapon wheel
 
-		  DeleteObject(attached_object.handle)
-		  attached_weapons[key] = nil
+		DeleteObject(attached_object.handle)
+		attached_weapons[key] = nil
 
-		  -- Check for remaining props from returning from a bucket / dimension (i.e. leaving an apartment)
-		  local objectId = GetClosestObjectOfType(pedCoords, 1.0, GetHashKey(key), false)
-		  DeleteObject(objectId)
-		end
+		-- Check for remaining props from returning from a bucket / dimension (i.e. leaving an apartment)
+		local objectId = GetClosestObjectOfType(pedCoords, 1.0, GetHashKey(key), false)
+		DeleteObject(objectId)
+		
 	end
 	
 end)
 
+-- <<<<<<<<<<<<<<< COMMANDS >>>>>>>>>>>>>>> --
+
+RegisterCommand("reloadskin", function(source)
+
+	local playerPed = PlayerPedId()
+	local health = GetEntityHealth(playerPed)
+	startReloadSkin(health, true)
+	
+end)
+
+--------------------------------------------------------------------------------------
+
 RegisterCommand("debug", function(source)
 
-	-- print("True: " .. tostring(true) .. " , False: " .. tostring(false))
-
-	-- for key, attached_object in pairs(attached_weapons) do
-	
-	-- 	local atc = IsEntityAttached(attached_object.handle)
-
-	-- 	print(key .. " , attached: " .. tostring(atc))
-		
-	-- end
-
-	----------------------------------------------------
-
-	local pedCoords = GetEntityCoords(PlayerPedId())
-
-	-- for key, attached_object in pairs(attached_weapons) do
-	
-	-- 	local objectId = GetClosestObjectOfType(pedCoords, 5.0, GetHashKey(key), false)
-
-	-- 	print(key .. " exists? " .. tostring(DoesEntityExist(objectId)))
-		
-	-- end
-
-	
-	local objectId = GetClosestObjectOfType(pedCoords, 1.0, GetHashKey("w_mg_minigun"), false) -- w_mg_minigun
-
-	print("Mnigun exists? " .. tostring(DoesEntityExist(objectId)))
-
-
+	print("SMG MK2 Hash: " .. tostring(GetHashKey("weapon_smgmk2")))
 	
 end)
 
@@ -418,11 +444,3 @@ RegisterCommand("debugdel", function(source)
 	end
 
 end)
-
--- AddEventHandler('apartments:client:LeaveApartment', function()
--- 	Wait(2000)
---     print("apartments:client:LeaveApartment -- LEFT APARTMENT !")
--- 	local playerPed = PlayerPedId()
--- 	local health = GetEntityHealth(playerPed)
--- 	startReloadSkin(health, false)
--- end)
