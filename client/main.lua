@@ -281,16 +281,6 @@ function refreshEntityAttachment()
 
 end
 
-local function has_value (tab, val)
-    for index, value in ipairs(tab) do
-        if value == val then
-            return true
-        end
-    end
-
-    return false
-end
-
 -- <<<<<<<<<<<<<<< EVENTS >>>>>>>>>>>>>>> --
 
 RegisterNetEvent('colbss-sling:client:changeSling')
@@ -340,10 +330,20 @@ end)
 RegisterNetEvent('colbss-sling:client:slingOffset')
 AddEventHandler('colbss-sling:client:slingOffset', function(offset)
 
-	if not has_value(Config.OffsetVals, offset) then
-		QBCore.Functions.Notify("Offset must be number 0-5 !", "error")
+	offset = tonumber(offset)
+
+	-- Validate input
+	if offset == nil then
+		QBCore.Functions.Notify("Offset must be valid number !", "error")
 		return
+	else
+		if offset < 0 or offset > Config.MaxOffset then
+			QBCore.Functions.Notify("Offset must be between 0 and " .. tostring(Config.MaxOffset) .. " !", "error")
+			return
+		end
 	end
+
+	print("Valid")
 
 	local me = PlayerPedId()
 	local weapHash = GetSelectedPedWeapon(me)
