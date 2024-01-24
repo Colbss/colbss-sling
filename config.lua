@@ -4,6 +4,9 @@ Config = {}
 -- Only show weapons that are in the hotbar
 Config.HotbarOnly = false
 
+-- Sling offset multipliers
+Config.OffsetVals = {0,1,2,3,4,5}
+
 Config.Positions = {
     [1] = { -- Back
         bone = 24816,
