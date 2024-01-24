@@ -88,7 +88,6 @@ local function reloadSkin(health)
     Citizen.Wait(1000) -- Safety Delay
     SetEntityHealth(PlayerPedId(), health)
 	SetPedArmour(PlayerPedId(), armor)
-	print("Set armour ? " .. armor)
 	
 	waitTime = 500
 	refreshing = false
