@@ -79,15 +79,16 @@ local function reloadSkin(health)
 
     SetPlayerModel(PlayerId(), model)
     SetModelAsNoLongerNeeded(model)
-    --Citizen.Wait(1000) -- Safety Delay
+    Citizen.Wait(1000) -- Safety Delay
 
     TriggerServerEvent("qb-clothes:loadPlayerSkin") -- LOADING PLAYER'S CLOTHES
     TriggerServerEvent("qb-clothing:loadPlayerSkin") -- LOADING PLAYER'S CLOTHES - Event 2
 
     SetPedMaxHealth(PlayerId(), maxhealth)
-    --Citizen.Wait(1000) -- Safety Delay
+    Citizen.Wait(1000) -- Safety Delay
     SetEntityHealth(PlayerPedId(), health)
 	SetPedArmour(PlayerPedId(), armor)
+	print("Set armour ? " .. armor)
 	
 	waitTime = 500
 	refreshing = false
@@ -168,7 +169,7 @@ function attachedWeapons()
 				local sameModel = false
 				local modelCount = 0
 				for slot, item in pairs(items) do
-					if item ~= nil and item.type == "weapon" Config.compatable_weapon_hashes[item.name] ~= nil then
+					if item ~= nil and item.type == "weapon" and Config.compatable_weapon_hashes[item.name] ~= nil then
 						if Config.compatable_weapon_hashes[item.name].hash == GetSelectedPedWeapon(me) then
 							modelCount = modelCount + 1
 							if modelCount >= 2 then
@@ -292,6 +293,9 @@ AddEventHandler('colbss-sling:client:changeSling', function()
 	if weapHash == GetHashKey("weapon_unarmed") then
 		QBCore.Functions.Notify("You are not holding a weapon!", "error")
 		return
+	elseif not sling_vals[weapHash] then
+		QBCore.Functions.Notify("This weapon cannot be slung!", "error")
+		return
 	end
 
 	local weapSling = sling_vals[weapHash].pos
@@ -332,6 +336,9 @@ AddEventHandler('colbss-sling:client:slingOffset', function(offset)
 
 	if weapHash == GetHashKey("weapon_unarmed") then
 		QBCore.Functions.Notify("You are not holding a weapon!", "error")
+		return
+	elseif not sling_vals[weapHash] then
+		QBCore.Functions.Notify("This weapon cannot be slung!", "error")
 		return
 	end
 
