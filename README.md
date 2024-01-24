@@ -10,7 +10,7 @@ This script also fixes some of the issues in qb-core with props attached to play
 
 Add ``start colbss-sling`` or ``ensure colbss-sling`` to your server.cfg or mods.cfg if you use one.
 
-<u>**IMPORTANT**</u> - You must remove / comment out the default `/refreshskin` command in `[qb]\qb-clothing\client\main.lua`. This script can run with refreshskin still existing, but it is not recommended.
+<u>**IMPORTANT**</u> - You must remove / comment out the default `/refreshskin` command in `[qb]\qb-clothing\client\main.lua`. This script can run with refreshskin still existing, but it is not recommended. If you have any other sling scripts make sure to remove these too.
 
 
 ### Config file

@@ -168,7 +168,7 @@ function attachedWeapons()
 				local sameModel = false
 				local modelCount = 0
 				for slot, item in pairs(items) do
-					if item ~= nil and item.type == "weapon" then
+					if item ~= nil and item.type == "weapon" Config.compatable_weapon_hashes[item.name] ~= nil then
 						if Config.compatable_weapon_hashes[item.name].hash == GetSelectedPedWeapon(me) then
 							modelCount = modelCount + 1
 							if modelCount >= 2 then
