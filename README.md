@@ -12,6 +12,7 @@ Add ``start colbss-sling`` or ``ensure colbss-sling`` to your server.cfg or mods
 
 <u>**IMPORTANT**</u> - You must remove / comment out the default `/refreshskin` command in `[qb]\qb-clothing\client\main.lua`. This script can run with refreshskin still existing, but it is not recommended. If you have any other sling scripts make sure to remove these too.
 
+For some unknown reason when the script starts the error `script:qb-core SCRIPT ERROR: error object is not a string` shows in the client terminal. It doesnt appear to affect anything and I have no idea what causes it.
 
 ### Config file
 All available weapons and their ideal positions are defined in the `config.lua`. Comment out the weapons that you <u>**do not**</u> want to show on players bodies. If you want items to only show on back if they are in the players hotbar you can enable this with `Config.HotbarOnly = true`. However, keep in mind that players can stil take weapons directly out of their pockets and negate the whole point of the sling.

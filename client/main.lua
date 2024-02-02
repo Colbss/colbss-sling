@@ -33,24 +33,25 @@ end)
 
 Citizen.CreateThread(function()
 
-	local src = source
-	local prevBucket = 0
-	local currBucket = 0
+	local prevBucket = ""
+	local currBucket = ""
 
+	-- When moving between dimensions the state of the player will be preserved.
+	-- The player will need to be refreshed when changing dimensions to avoid
+	-- ghost props appearing on the players back.
 	while true do
 
 		local p = promise.new()
-		QBCore.Functions.TriggerCallback("colbss-sling:server:GetRoutingBucket", function(result)
+		QBCore.Functions.TriggerCallback("colbss-sling:server:routingBucket", function(result)
 			p:resolve(result)
-		end, src)
+		end)
 		currBucket = Citizen.Await(p)
 
 		if currBucket ~= prevBucket then
-			print("Bucket Changed ! " .. tostring(currBucket) .. " != " .. tostring(prevBucket))
 			bucketRefresh()
 			prevBucket = currBucket
 		end
-
+		
 		Wait(0)
 	end
 end)
@@ -307,13 +308,9 @@ function refreshEntityAttachment()
 				-- Delete expected prop
 				DeleteObject(attached_object.handle)
 
-				-- #+#+#+#+#+# This can be added but you may get qb-core errors for some unknown reason #+#+#+#+#+#
-
-				-- local objectId = GetClosestObjectOfType(pedCoords, 1.0, GetHashKey(tostring(key)), false)
-				-- print(objectId)
-				-- DeleteObject(objectId)
-
-				-- #+#+#+#+#+##+#+#+#+#+##+#+#+#+#+##+#+#+#+#+##+#+#+#+#+##+#+#+#+#+##+#+#+#+#+##+#+#+#+#+##+#+#+#+#
+				-- Delete extra props that may be attached
+				local objectId = GetClosestObjectOfType(pedCoords, 1.0, GetHashKey(tostring(key)), false)
+				DeleteObject(objectId)
 
 				attached_weapons[key].handle = CreateObject(GetHashKey(key), 1.0, 1.0, 1.0, true, true, false)
 				attachWithOffset(attached_object.handle, boneIndex, sling_vals[weapHash])
