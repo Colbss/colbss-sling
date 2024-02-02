@@ -13,22 +13,46 @@ local waitTime = 500
 -- <<<<<<<<<<<<<<< THREADS >>>>>>>>>>>>>>> --
 
 Citizen.CreateThread(function()
-  while true do
-    if playerLoaded and not inVehicle then
-        
-		-- Only need to attach new weapons when player is
-		-- not refreshing their skin
-		if not refreshing then
-			attachedWeapons()
-		-- Keep checking for detached weapons while
-		-- player is refreshing their skin
-		else
-			refreshEntityAttachment()
+	while true do
+		if playerLoaded and not inVehicle then
+			
+			-- Only need to attach new weapons when player is
+			-- not refreshing their skin
+			if not refreshing then
+				attachedWeapons()
+			-- Keep checking for detached weapons while
+			-- player is refreshing their skin
+			else
+				refreshEntityAttachment()
+			end
+
+		end
+		Wait(waitTime)
+	end
+end)
+
+Citizen.CreateThread(function()
+
+	local src = source
+	local prevBucket = 0
+	local currBucket = 0
+
+	while true do
+
+		local p = promise.new()
+		QBCore.Functions.TriggerCallback("colbss-sling:server:GetRoutingBucket", function(result)
+			p:resolve(result)
+		end, src)
+		currBucket = Citizen.Await(p)
+
+		if currBucket ~= prevBucket then
+			print("Bucket Changed ! " .. tostring(currBucket) .. " != " .. tostring(prevBucket))
+			bucketRefresh()
+			prevBucket = currBucket
 		end
 
+		Wait(0)
 	end
-    Wait(waitTime)
-  end
 end)
 
 Citizen.CreateThread(function()
@@ -37,14 +61,24 @@ Citizen.CreateThread(function()
   
 		  	-- Delete weapons when entering a vehicle to avoid car-nado
 		  	if IsPedInAnyVehicle(PlayerPedId(), true) then
-				inVehicle = true
-				local pedCoords = GetEntityCoords(PlayerPedId())
-			  	for key, attached_object in pairs(attached_weapons) do
-					-- Remove props from back
-					local objectId = GetClosestObjectOfType(pedCoords, 1.0, GetHashKey(key), false)
-					DeleteObject(objectId)
 
-			  	end
+				local vehicle = GetVehiclePedIsIn(GetPlayerPed(), false)
+               	local vehicleClass = GetVehicleClass(vehicle)
+
+				-- Guns stay on back if on a bike
+				if vehicleClass ~= 8 and vehicleClass ~= 13 then
+
+					inVehicle = true
+					local pedCoords = GetEntityCoords(PlayerPedId())
+					  for key, attached_object in pairs(attached_weapons) do
+						-- Remove props from back
+						local objectId = GetClosestObjectOfType(pedCoords, 1.0, GetHashKey(key), false)
+						DeleteObject(objectId)
+	
+					  end
+
+				end
+
 		  	else
 				inVehicle = false
 			end
@@ -254,6 +288,8 @@ end
 -- When skin is refreshed the guns will need to be reattached
 function refreshEntityAttachment()
 
+	local pedCoords = GetEntityCoords(PlayerPedId())
+
 	for key, attached_object in pairs(attached_weapons) do
 	
 		if not IsEntityAttached(attached_object.handle) then
@@ -267,8 +303,17 @@ function refreshEntityAttachment()
 
 			--If reattachment fails, delete object and reattach
 			if not IsEntityAttached(attached_object.handle) then
-			
+
+				-- Delete expected prop
 				DeleteObject(attached_object.handle)
+
+				-- #+#+#+#+#+# This can be added but you may get qb-core errors for some unknown reason #+#+#+#+#+#
+
+				-- local objectId = GetClosestObjectOfType(pedCoords, 1.0, GetHashKey(tostring(key)), false)
+				-- print(objectId)
+				-- DeleteObject(objectId)
+
+				-- #+#+#+#+#+##+#+#+#+#+##+#+#+#+#+##+#+#+#+#+##+#+#+#+#+##+#+#+#+#+##+#+#+#+#+##+#+#+#+#+##+#+#+#+#
 
 				attached_weapons[key].handle = CreateObject(GetHashKey(key), 1.0, 1.0, 1.0, true, true, false)
 				attachWithOffset(attached_object.handle, boneIndex, sling_vals[weapHash])
@@ -276,8 +321,16 @@ function refreshEntityAttachment()
 			end
 
 		end
-		
+	
 	end
+
+end
+
+function bucketRefresh()
+
+	local playerPed = PlayerPedId()
+	local health = GetEntityHealth(playerPed)
+	reloadSkin(health)
 
 end
 
@@ -343,8 +396,6 @@ AddEventHandler('colbss-sling:client:slingOffset', function(offset)
 		end
 	end
 
-	print("Valid")
-
 	local me = PlayerPedId()
 	local weapHash = GetSelectedPedWeapon(me)
 
@@ -362,7 +413,7 @@ end)
 
 RegisterNetEvent('QBCore:Client:OnPlayerLoaded')
 AddEventHandler('QBCore:Client:OnPlayerLoaded', function()
-  playerLoaded = true;
+  	playerLoaded = true
 end)
 
 AddEventHandler("apartments:client:Logout", function()

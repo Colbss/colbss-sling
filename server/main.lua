@@ -7,3 +7,7 @@ end)
 QBCore.Commands.Add("slingoffset", "Adjust sling offset (distance from body)", {{name="offset", help="0-5"}}, true, function(source, args)
 	TriggerClientEvent("colbss-sling:client:slingOffset", source, args[1])
 end)
+
+QBCore.Functions.CreateCallback("colbss-sling:server:GetRoutingBucket", function(source, cb)
+    cb(GetPlayerRoutingBucket(source))
+end)
